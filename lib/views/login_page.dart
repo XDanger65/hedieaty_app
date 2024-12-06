@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:project/views/sign_up_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:project/views/profile_page.dart';
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
   void _navigateToSignUp() {
     Navigator.push(
@@ -27,10 +29,10 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text.trim(),
       );
 
-      // Navigate to ProfilePage if login is successful
+      // Navigate to home if login is successful
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ProfilePage()),
+        MaterialPageRoute(builder: (context) => HomePage()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -41,8 +43,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
+    final bool removeLeading = args['removeLeading'] ?? false;
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: removeLeading
+          ? null: AppBar(title: Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
