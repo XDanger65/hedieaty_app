@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:project/views/sign_up_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:project/views/profile_page.dart';
 import 'home_page.dart';
+
+//eslam@eslam.com  123456789
 
 class LoginPage extends StatefulWidget {
   @override
@@ -24,10 +25,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
 
       // Navigate to home if login is successful
       Navigator.pushReplacement(
@@ -47,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
     final bool removeLeading = args['removeLeading'] ?? false;
     return Scaffold(
       appBar: removeLeading
-          ? null: AppBar(title: Text('Login')),
+          ? null: AppBar(title: Text('Login'),backgroundColor: Colors.brown,),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
