@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/auth_model.dart';
 import '../controllers/firestore_service.dart';
-import '../controllers/image_service.dart';
 import '../widgets/loading_indicator.dart';
 import '../views/login_page.dart';
+import '../views/my_pledged_gifts_page.dart'; // Assuming this is the location of the pledged gifts page.
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -17,12 +17,12 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final AuthModel _authService = AuthModel();
   final FirestoreService _firestoreService = FirestoreService();
-  final ImageService _imageService = ImageService();
 
   String? _name;
   String? _email;
-  File? _localPhoto;
+  bool _notificationsEnabled = false;
   bool _isLoading = true;
+  List<Map<String, dynamic>> _userEvents = []; // To store user events and gifts
 
   @override
   void initState() {
@@ -34,35 +34,43 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final user = _authService.currentUser;
       if (user != null) {
+        print('Fetching data for UID: ${user.uid}');
         final userData = await _firestoreService.getUserData(user.uid);
 
-        final localImage = await _imageService.getLocalImage();
-        setState(() {
-          _name = userData?['name'] ?? 'No Name';
-          _email = user.email ?? 'No Email';
-          _localPhoto = localImage;
-          _isLoading = false;
-        });
-
-        if (_localPhoto == null && userData?['photoUrl'] != null) {
-          final savedPath = await _imageService.saveImageLocally(userData!['photoUrl']);
+        if (userData != null) {
           setState(() {
-            _localPhoto = File(savedPath);
+            _name = userData['name'] ?? 'No Name';
+            _email = user.email ?? 'No Email';
+            _notificationsEnabled = userData['notificationsEnabled'] ?? false;
+           // _photoUrl = userData['photoUrl'];
+            _isLoading = false;
+          });
+          print('User data set in state: $_name, $_email');
+        } else {
+          print('User data is null for UID: ${user.uid}');
+          setState(() {
+            _isLoading = false;
           });
         }
       } else {
+        print('No authenticated user found.');
         setState(() {
           _isLoading = false;
         });
-        Navigator.popUntil(context, (route) => route.isFirst);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
       }
     } catch (e) {
+      print('Error in _fetchUserData: $e');
       setState(() {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +86,10 @@ class _ProfilePageState extends State<ProfilePage> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await _authService.signOut();  // Sign the user out
+              await _authService.signOut();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),  // Navigate to LoginPage
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -93,9 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundImage: _localPhoto != null
-                  ? FileImage(_localPhoto!)
-                  : const AssetImage('assets/1.jpeg') as ImageProvider,
+              backgroundImage: const AssetImage('assets/1.jpeg'), // Static asset image
             ),
             const SizedBox(height: 10),
             Text(
@@ -111,6 +117,48 @@ class _ProfilePageState extends State<ProfilePage> {
               leading: const Icon(Icons.edit),
               title: const Text('Edit Profile'),
               onTap: _showEditProfileDialog,
+            ),
+            ListTile(
+              leading: Icon(
+                _notificationsEnabled ? Icons.notifications : Icons.notifications_off,
+              ),
+              title: const Text('Notification Settings'),
+              trailing: Switch(
+                value: _notificationsEnabled,
+                onChanged: (value) async {
+                  setState(() {
+                    _notificationsEnabled = value;
+                  });
+                  await _firestoreService.updateUserData(
+                    _authService.currentUser!.uid,
+                    {'notificationsEnabled': value},
+                  );
+                },
+              ),
+            ),
+            const Divider(),
+            // List of user's created events and associated gifts
+            const ListTile(
+              leading: Icon(Icons.event),
+              title: Text('Your Created Events'),
+            ),
+            for (var event in _userEvents)
+              ListTile(
+                leading: const Icon(Icons.card_giftcard),
+                title: Text(event['eventName']),
+                subtitle: Text('Gifts: ${event['gifts'].join(', ')}'),
+              ),
+            const Divider(),
+            // Link to My Pledged Gifts Page
+            ListTile(
+              leading: const Icon(Icons.card_giftcard),
+              title: const Text('My Pledged Gifts'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyPledgedGiftsPage()),
+                );
+              },
             ),
           ],
         ),

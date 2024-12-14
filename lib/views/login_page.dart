@@ -3,8 +3,6 @@ import 'package:project/views/sign_up_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 
-//eslam@eslam.com  123456789 eslammosta65@gmail.com
-
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -15,7 +13,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-
   void _navigateToSignUp() {
     Navigator.push(
       context,
@@ -25,15 +22,32 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     try {
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      // Navigate to home if login is successful
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+      if (userCredential.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Wrong password provided for that user.';
+      } else {
+        message = 'Login failed. ${e.message}';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed. Please check your credentials.')),
+        SnackBar(content: Text('An unexpected error occurred. Please try again.')),
       );
     }
   }
@@ -44,7 +58,11 @@ class _LoginPageState extends State<LoginPage> {
     final bool removeLeading = args['removeLeading'] ?? false;
     return Scaffold(
       appBar: removeLeading
-          ? null: AppBar(title: Text('Login'),backgroundColor: Colors.brown,),
+          ? null
+          : AppBar(
+        title: Text('Login'),
+        backgroundColor: Colors.brown,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
