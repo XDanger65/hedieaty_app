@@ -21,18 +21,34 @@ class FirestoreService {
     }
   }
 
+  // Method to add an event
+  Future<void> addEvent(String userId, String title, String date) async {
+    try {
+      // Add event to user's events collection
+      await _firestore.collection('users').doc(userId).collection('events').add({
+        'title': title,
+        'date': date,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('Event added successfully');
+    } catch (e) {
+      print('Error adding event: $e');
+      throw Exception('Failed to add event: $e');
+    }
+  }
 
-  // Example method to fetch user events
-  Future<List<Map<String, dynamic>>> getUserEvents(String uid) async {
+  // Method to fetch events for a user
+  Future<List<Map<String, dynamic>>> getUserEvents(String userId) async {
     try {
       final QuerySnapshot eventQuery =
-      await _firestore.collection('users').doc(uid).collection('events').get();
+      await _firestore.collection('users').doc(userId).collection('events').orderBy('createdAt', descending: true).get();
 
       return eventQuery.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch user events: $e');
+      print('Error fetching events: $e');
+      throw Exception('Failed to fetch events: $e');
     }
   }
 
@@ -40,7 +56,9 @@ class FirestoreService {
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
       await _firestore.collection('users').doc(uid).update(data);
+      print('User data updated successfully');
     } catch (e) {
+      print('Error updating user data: $e');
       throw Exception('Failed to update user data: $e');
     }
   }

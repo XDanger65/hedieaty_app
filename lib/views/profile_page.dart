@@ -1,11 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/auth_model.dart';
 import '../controllers/firestore_service.dart';
 import '../widgets/loading_indicator.dart';
 import '../views/login_page.dart';
-import '../views/my_pledged_gifts_page.dart'; // Assuming this is the location of the pledged gifts page.
+import '../views/EventDetailPage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -22,7 +22,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _email;
   bool _notificationsEnabled = false;
   bool _isLoading = true;
-  List<Map<String, dynamic>> _userEvents = []; // To store user events and gifts
+  List<Map<String, dynamic>> _userEvents = [];
 
   @override
   void initState() {
@@ -34,26 +34,22 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final user = _authService.currentUser;
       if (user != null) {
-        print('Fetching data for UID: ${user.uid}');
         final userData = await _firestoreService.getUserData(user.uid);
-
         if (userData != null) {
+          final userEvents = await _firestoreService.getUserEvents(user.uid);
           setState(() {
             _name = userData['name'] ?? 'No Name';
             _email = user.email ?? 'No Email';
             _notificationsEnabled = userData['notificationsEnabled'] ?? false;
-           // _photoUrl = userData['photoUrl'];
+            _userEvents = userEvents;
             _isLoading = false;
           });
-          print('User data set in state: $_name, $_email');
         } else {
-          print('User data is null for UID: ${user.uid}');
           setState(() {
             _isLoading = false;
           });
         }
       } else {
-        print('No authenticated user found.');
         setState(() {
           _isLoading = false;
         });
@@ -63,14 +59,12 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } catch (e) {
-      print('Error in _fetchUserData: $e');
       setState(() {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: Colors.brown,
+        backgroundColor: Colors.teal,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -99,30 +93,46 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: const AssetImage('assets/1.jpeg'), // Static asset image
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _name ?? 'Loading...',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              _email ?? 'Loading...',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit Profile'),
-              onTap: _showEditProfileDialog,
-            ),
-            ListTile(
-              leading: Icon(
-                _notificationsEnabled ? Icons.notifications : Icons.notifications_off,
+            // Profile Header
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: const AssetImage('assets/1.jpeg'),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _name ?? 'Loading...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      _email ?? 'Loading...',
+                      style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
-              title: const Text('Notification Settings'),
+            ),
+            const SizedBox(height: 20),
+            // Notification Settings
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+              leading: Icon(
+                _notificationsEnabled ? Icons.notifications_active : Icons.notifications_off,
+                color: Colors.teal,
+              ),
+              title: Text(
+                'Notifications',
+                style: GoogleFonts.poppins(fontSize: 18),
+              ),
               trailing: Switch(
                 value: _notificationsEnabled,
                 onChanged: (value) async {
@@ -136,30 +146,60 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
               ),
             ),
-            const Divider(),
-            // List of user's created events and associated gifts
-            const ListTile(
-              leading: Icon(Icons.event),
-              title: Text('Your Created Events'),
-            ),
-            for (var event in _userEvents)
-              ListTile(
-                leading: const Icon(Icons.card_giftcard),
-                title: Text(event['eventName']),
-                subtitle: Text('Gifts: ${event['gifts'].join(', ')}'),
+            const Divider(height: 30),
+            // Edit Profile Button
+            ElevatedButton.icon(
+              onPressed: _showEditProfileDialog,
+              icon: const Icon(Icons.edit, color: Colors.white),
+              label: Text(
+                'Edit Profile',
+                style: GoogleFonts.poppins(fontSize: 16),
               ),
-            const Divider(),
-            // Link to My Pledged Gifts Page
-            ListTile(
-              leading: const Icon(Icons.card_giftcard),
-              title: const Text('My Pledged Gifts'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MyPledgedGiftsPage()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Events List
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Your Events',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _userEvents.isNotEmpty
+                ? ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _userEvents.length,
+              itemBuilder: (context, index) {
+                final event = _userEvents[index];
+                return Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: ListTile(
+                    leading: const Icon(Icons.event, color: Colors.teal),
+                    title: Text(event['title'], style: GoogleFonts.poppins(fontSize: 16)),
+                    subtitle: Text(
+                      'Date: ${event['date']}',
+                      style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EventDetailPage(event: event),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
-            ),
+            )
+                : const Text('No events found.'),
           ],
         ),
       ),
@@ -167,24 +207,27 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showEditProfileDialog() {
-    final TextEditingController nameController =
-    TextEditingController(text: _name);
+    final TextEditingController nameController = TextEditingController(text: _name);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text('Edit Profile'),
           content: TextField(
             controller: nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: const InputDecoration(
+              labelText: 'Name',
+              border: OutlineInputBorder(),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () async {
                 final newName = nameController.text.trim();
                 if (newName.isNotEmpty) {
@@ -196,6 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Navigator.of(context).pop();
                 }
               },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
               child: const Text('Save'),
             ),
           ],

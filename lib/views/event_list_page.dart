@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project/controllers/firestore_service.dart';
 import 'package:project/views/gift_list_page.dart';
 
 class EventListPage extends StatefulWidget {
@@ -9,11 +11,31 @@ class EventListPage extends StatefulWidget {
 }
 
 class _EventListPageState extends State<EventListPage> {
-  final List<Map<String, String>> _events = [
-    {'title': 'Birthday Party', 'date': '2024-12-15'},
-    {'title': 'Wedding Reception', 'date': '2024-12-25'},
-    {'title': 'Graduation Celebration', 'date': '2025-01-10'},
-  ];
+  final FirestoreService _firestoreService = FirestoreService();
+  final List<Map<String, String>> _events = [];
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserEvents();
+  }
+
+  void _fetchUserEvents() async {
+    final events = await _firestoreService.getUserEvents(currentUserId);
+    setState(() {
+      _events.clear();
+      // Convert Map<String, dynamic> to Map<String, String>
+      _events.addAll(events.map((e) => {
+        'title': e['title']?.toString() ?? '',  // Safely convert to String
+        'date': e['date']?.toString() ?? '',    // Safely convert to String
+      }).toList());
+    });
+  }
+
+
+
+
 
   void _showAddEventDialog() {
     final TextEditingController titleController = TextEditingController();
@@ -44,7 +66,7 @@ class _EventListPageState extends State<EventListPage> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 final title = titleController.text.trim();
                 final date = dateController.text.trim();
 
@@ -55,9 +77,9 @@ class _EventListPageState extends State<EventListPage> {
                   return;
                 }
 
-                setState(() {
-                  _events.add({'title': title, 'date': date});
-                });
+                // Add event to Firestore
+                await _firestoreService.addEvent(currentUserId, title, date);
+                _fetchUserEvents();
 
                 Navigator.of(context).pop();
               },
@@ -73,7 +95,7 @@ class _EventListPageState extends State<EventListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.brown,
+        backgroundColor: Colors.teal,
         title: const Text('Event List'),
         actions: [
           IconButton(

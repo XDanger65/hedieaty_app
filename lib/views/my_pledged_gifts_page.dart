@@ -14,7 +14,7 @@ class MyPledgedGiftsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.brown,
+        backgroundColor: Colors.teal,
         title: const Text('My Pledged Gifts'),
       ),
       body: ListView.builder(
