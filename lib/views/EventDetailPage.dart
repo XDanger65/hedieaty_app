@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class EventDetailPage extends StatelessWidget {
   final Map<String, dynamic> event;
 
-  const EventDetailPage({Key? key, required this.event}) : super(key: key);
+  const EventDetailPage({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class EventDetailPage extends StatelessWidget {
             const SizedBox(height: 10),
             Text('Date: ${event['date'] ?? 'No Date'}'),
             const SizedBox(height: 20),
-            Text('Event Details:', style: const TextStyle(fontSize: 18)),
+            const Text('Event Details:', style: TextStyle(fontSize: 18)),
             // You can add more details here if available, such as event description, gifts, etc.
             // Example:
             Text('Created at: ${event['createdAt']}'),

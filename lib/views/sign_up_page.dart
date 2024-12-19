@@ -3,6 +3,8 @@ import '../models/auth_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
@@ -29,7 +31,7 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             children: [
               // Header with icon and title
-              Column(
+              const Column(
                 children: [
                   Icon(Icons.person_add, size: 80, color: Colors.teal),
                   SizedBox(height: 10),
@@ -51,7 +53,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     // Email input field
                     TextFormField(
                       controller: emailController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Email',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.email),
@@ -67,15 +69,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
 
                     // Password input field
                     TextFormField(
                       controller: passwordController,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock),
                         errorText: _passwordError,
                       ),
                       obscureText: true,
@@ -89,23 +91,23 @@ class _SignUpPageState extends State<SignUpPage> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
 
                     // Name input field
                     TextFormField(
                       controller: nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Full Name',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.person),
                       ),
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
 
                     // Profile Photo URL input field
                     TextFormField(
                       controller: photoUrlController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Profile Photo URL (optional)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.image),
@@ -114,7 +116,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
               // Sign Up button
               ElevatedButton(
@@ -142,22 +144,22 @@ class _SignUpPageState extends State<SignUpPage> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Sign Up',
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Sign In navigation
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text(
+                child: const Text(
                   'Already have an account? Sign In',
                   style: TextStyle(color: Colors.teal),
                 ),

@@ -3,9 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../views/profile_page.dart';
 import '../views/event_list_page.dart';
 import '../views/my_pledged_gifts_page.dart';
+import '../views/gift_list_page.dart'; // Assuming the gift list page is here
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -15,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const HomeScreen(), // Home Page
+    const HomePageContent(), // Updated Home Page
     const EventListPage(), // Event List Page
     const MyPledgedGiftsPage(), // My Pledged Gifts Page
     const ProfilePage(), // Profile Page
@@ -57,14 +58,14 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomePageContent extends StatefulWidget {
+  const HomePageContent({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _HomePageContentState createState() => _HomePageContentState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomePageContentState extends State<HomePageContent> {
   final TextEditingController _searchController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final List<Map<String, dynamic>> _friendsList = [];
@@ -201,6 +202,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _navigateToGiftList(String friendName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GiftListPage(eventTitle: friendName),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,6 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           : 'No Upcoming Events'),
                     ],
                   ),
+                  onTap: () => _navigateToGiftList(friend['name']),
                 );
               },
             ),
@@ -250,8 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddFriendDialog,
-        child: const Icon(Icons.person_add),
         tooltip: 'Add Friend',
+        child: const Icon(Icons.person_add),
       ),
     );
   }

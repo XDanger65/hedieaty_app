@@ -5,7 +5,7 @@ class GiftDetailsPage extends StatefulWidget {
   final String giftName;
   final String initialStatus;
 
-  const GiftDetailsPage({Key? key, required this.giftName, required this.initialStatus}) : super(key: key);
+  const GiftDetailsPage({super.key, required this.giftName, required this.initialStatus});
 
   @override
   _GiftDetailsPageState createState() => _GiftDetailsPageState();
@@ -26,8 +26,8 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   }
 
   void _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     setState(() {
       _image = image;
     });
@@ -43,7 +43,7 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gift Details'),
+        title: const Text('Gift Details'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -62,7 +62,7 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
               decoration: const InputDecoration(labelText: 'Price'),
               keyboardType: TextInputType.number,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 ElevatedButton(
@@ -71,11 +71,11 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
                 ),
                 if (_image != null) ...[
                   const SizedBox(width: 10),
-                  Text('Image selected'),
+                  const Text('Image selected'),
                 ],
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _toggleStatus,
               child: Text('Status: $status'),

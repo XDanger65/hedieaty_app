@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Method to fetch user data
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -40,8 +42,12 @@ class FirestoreService {
   // Method to fetch events for a user
   Future<List<Map<String, dynamic>>> getUserEvents(String userId) async {
     try {
-      final QuerySnapshot eventQuery =
-      await _firestore.collection('users').doc(userId).collection('events').orderBy('createdAt', descending: true).get();
+      final QuerySnapshot eventQuery = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .orderBy('createdAt', descending: true)
+          .get();
 
       return eventQuery.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
@@ -60,6 +66,87 @@ class FirestoreService {
     } catch (e) {
       print('Error updating user data: $e');
       throw Exception('Failed to update user data: $e');
+    }
+  }
+
+  // Method to add a gift to an event
+  Future<void> addGift(String userId, String eventId, String giftName) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .doc(eventId)
+          .collection('gifts')
+          .add({
+        'name': giftName,
+        'isPledged': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('Gift added successfully');
+    } catch (e) {
+      print('Error adding gift: $e');
+      throw Exception('Failed to add gift: $e');
+    }
+  }
+
+  // Method to fetch gifts for a specific event
+  Future<List<Map<String, dynamic>>> getGifts(String userId, String eventId) async {
+    try {
+      final QuerySnapshot giftQuery = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .doc(eventId)
+          .collection('gifts')
+          .orderBy('createdAt')
+          .get();
+
+      return giftQuery.docs
+          .map((doc) => {
+        'id': doc.id,
+        'name': doc['name'],
+        'isPledged': doc['isPledged'],
+      })
+          .toList();
+    } catch (e) {
+      print('Error fetching gifts: $e');
+      throw Exception('Failed to fetch gifts: $e');
+    }
+  }
+
+  // Method to update pledged status of a gift
+  Future<void> updateGiftPledgedStatus(String userId, String eventId, String giftId, bool isPledged) async {
+    try {
+      final giftDoc = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('events')
+          .doc(eventId)
+          .collection('gifts')
+          .doc(giftId);
+
+      await giftDoc.update({'isPledged': isPledged});
+      print('Gift pledged status updated successfully');
+    } catch (e) {
+      print('Error updating gift pledged status: $e');
+      throw Exception('Failed to update gift pledged status: $e');
+    }
+  }
+
+  // Helper method to get the current authenticated user's UID
+  Future<String?> getCurrentUserUid() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        return user.uid;
+      } else {
+        print('No user authenticated');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching current user UID: $e');
+      throw Exception('Failed to fetch current user UID: $e');
     }
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/auth_model.dart';
 import '../controllers/firestore_service.dart';
@@ -8,7 +7,7 @@ import '../views/login_page.dart';
 import '../views/EventDetailPage.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -55,7 +54,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       }
     } catch (e) {
@@ -83,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
               await _authService.signOut();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
@@ -101,9 +100,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 50,
-                      backgroundImage: const AssetImage('assets/1.jpeg'),
+                      backgroundImage: AssetImage('assets/1.jpeg'),
                     ),
                     const SizedBox(height: 10),
                     Text(

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ImageService {
   Future<File?> getLocalImage() async {
     final directory = await getApplicationDocumentsDirectory();
-    final path = directory.path + '/profile_image.jpg';
+    final path = '${directory.path}/profile_image.jpg';
     if (File(path).existsSync()) {
       return File(path);
     }

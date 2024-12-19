@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -17,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   void _navigateToSignUp() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SignUpPage()),
+      MaterialPageRoute(builder: (context) => const SignUpPage()),
     );
   }
 
@@ -34,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
       if (userCredential.user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -51,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An unexpected error occurred. Please try again.')),
+        const SnackBar(content: Text('An unexpected error occurred. Please try again.')),
       );
     }
   }
@@ -64,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: removeLeading
           ? null
           : AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
         backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(
@@ -74,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Add a logo or header
-              Center(
+              const Center(
                 child: Column(
                   children: [
                     Icon(Icons.lock, size: 100, color: Colors.teal),
@@ -85,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Form(
                 key: _formKey,
                 child: Column(
@@ -93,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                     // Email Field
                     TextFormField(
                       controller: _emailController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Email',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.email),
@@ -108,11 +110,11 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.lock),
@@ -131,29 +133,29 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               // Login Button
               ElevatedButton(
                 onPressed: _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
-                child: Text(
+                child: const Text(
                   'Login',
                   style: TextStyle(fontSize: 18,color: Colors.white),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               // Sign Up Button
               OutlinedButton(
                 onPressed: _navigateToSignUp,
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  side: BorderSide(color: Colors.brown),
-                  minimumSize: Size(double.infinity, 50),
+                  side: const BorderSide(color: Colors.brown),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
-                child: Text(
+                child: const Text(
                   'Create an Account',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
