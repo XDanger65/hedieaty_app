@@ -79,6 +79,6 @@ void main() {
 
       // Add a delay to allow for cleanup
       await Future.delayed(const Duration(seconds: 2));
+      });
     });
-  });
 }

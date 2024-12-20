@@ -5,30 +5,26 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Helper method to get the Firestore reference for user data
+  // Helper: Get user Firestore reference
   DocumentReference getUserRef(String userId) {
     return _firestore.collection('users').doc(userId);
   }
 
-  // Method to fetch user data
-  Future<Map<String, dynamic>?> getUserData(String uid) async {
-    try {
-      final DocumentSnapshot userDoc = await getUserRef(uid).get();
+  // Helper: Fetch event document reference
+  Future<DocumentReference> _getEventRef(String userId, String eventTitle) async {
+    final eventQuery = await getUserRef(userId)
+        .collection('events')
+        .where('title', isEqualTo: eventTitle)
+        .limit(1)
+        .get();
 
-      if (userDoc.exists) {
-        print('User data fetched: ${userDoc.data()}');
-        return userDoc.data() as Map<String, dynamic>?;
-      } else {
-        print('No user document found for UID: $uid');
-        return null;
-      }
-    } catch (e) {
-      print('Error fetching user data: $e');
-      throw Exception('Failed to fetch user data: $e');
+    if (eventQuery.docs.isEmpty) {
+      throw Exception('Event not found');
     }
+    return eventQuery.docs.first.reference;
   }
 
-  // Method to add an event
+  // 1. Add Methods
   Future<void> addEvent(String userId, String title, String date) async {
     try {
       await getUserRef(userId).collection('events').add({
@@ -43,42 +39,10 @@ class FirestoreService {
     }
   }
 
-  // Method to fetch events for a user
-  Future<List<Map<String, dynamic>>> getUserEvents(String userId) async {
+  Future<void> addGift(String userId, String eventTitle, String giftName) async {
     try {
-      final QuerySnapshot eventQuery = await getUserRef(userId)
-          .collection('events')
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      return eventQuery.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
-    } catch (e) {
-      print('Error fetching events: $e');
-      throw Exception('Failed to fetch events: $e');
-    }
-  }
-
-  // Method to update user data
-  Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
-    try {
-      await getUserRef(uid).update(data);
-      print('User data updated successfully');
-    } catch (e) {
-      print('Error updating user data: $e');
-      throw Exception('Failed to update user data: $e');
-    }
-  }
-
-  // Method to add a gift to an event
-  Future<void> addGift(String userId, String eventId, String giftName) async {
-    try {
-      await getUserRef(userId)
-          .collection('events')
-          .doc(eventId)
-          .collection('gifts')
-          .add({
+      final eventRef = await _getEventRef(userId, eventTitle);
+      await eventRef.collection('gifts').add({
         'name': giftName,
         'isPledged': false,
         'createdAt': FieldValue.serverTimestamp(),
@@ -90,39 +54,55 @@ class FirestoreService {
     }
   }
 
-  // Method to fetch gifts for a specific event
-  Future<List<Map<String, dynamic>>> getGifts(String userId, String eventId) async {
+  // 2. Fetch Methods
+  Future<List<Map<String, dynamic>>> getUserEvents(String userId) async {
     try {
-      final QuerySnapshot giftQuery = await getUserRef(userId)
+      final events = await getUserRef(userId)
           .collection('events')
-          .doc(eventId)
-          .collection('gifts')
-          .orderBy('createdAt')
+          .orderBy('createdAt', descending: true)
           .get();
 
-      return giftQuery.docs
-          .map((doc) => {
-        'id': doc.id,
-        'name': doc['name'],
-        'isPledged': doc['isPledged'],
-      })
-          .toList();
+      return events.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {'id': doc.id, ...data};
+      }).toList();
+    } catch (e) {
+      print('Error fetching events: $e');
+      throw Exception('Failed to fetch events: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGifts(String userId, String eventTitle) async {
+    try {
+      final eventRef = await _getEventRef(userId, eventTitle);
+      final gifts = await eventRef.collection('gifts').orderBy('createdAt').get();
+
+      return gifts.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {'id': doc.id, ...data};
+      }).toList();
     } catch (e) {
       print('Error fetching gifts: $e');
       throw Exception('Failed to fetch gifts: $e');
     }
   }
 
-  // Method to update pledged status of a gift
-  Future<void> updateGiftPledgedStatus(String userId, String eventId, String giftId, bool isPledged) async {
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      final giftDoc = getUserRef(userId)
-          .collection('events')
-          .doc(eventId)
-          .collection('gifts')
-          .doc(giftId);
+      final userDoc = await getUserRef(uid).get();
+      return userDoc.exists ? userDoc.data() as Map<String, dynamic>? : null;
+    } catch (e) {
+      print('Error fetching user data: $e');
+      throw Exception('Failed to fetch user data: $e');
+    }
+  }
 
-      await giftDoc.update({'isPledged': isPledged});
+  // 3. Update Methods
+  Future<void> updateGiftPledgedStatus(
+      String userId, String eventTitle, String giftId, bool isPledged) async {
+    try {
+      final eventRef = await _getEventRef(userId, eventTitle);
+      await eventRef.collection('gifts').doc(giftId).update({'isPledged': isPledged});
       print('Gift pledged status updated successfully');
     } catch (e) {
       print('Error updating gift pledged status: $e');
@@ -130,16 +110,20 @@ class FirestoreService {
     }
   }
 
-  // Helper method to get the current authenticated user's UID
+  Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
+    try {
+      await getUserRef(uid).update(data);
+      print('User data updated successfully');
+    } catch (e) {
+      print('Error updating user data: $e');
+      throw Exception('Failed to update user data: $e');
+    }
+  }
+
+  // Helper: Get current user's UID
   Future<String?> getCurrentUserUid() async {
     try {
-      User? user = _auth.currentUser;
-      if (user != null) {
-        return user.uid;
-      } else {
-        print('No user authenticated');
-        return null;
-      }
+      return _auth.currentUser?.uid;
     } catch (e) {
       print('Error fetching current user UID: $e');
       throw Exception('Failed to fetch current user UID: $e');

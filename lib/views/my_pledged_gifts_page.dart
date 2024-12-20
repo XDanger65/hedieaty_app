@@ -10,65 +10,43 @@ class MyPledgedGiftsPage extends StatefulWidget {
 }
 
 class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
-  late FirebaseFirestore _firestore;
-  late String userId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  List<Map<String, String>> pledgedGifts = [];
+  List<Map<String, dynamic>> pledgedGifts = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _firestore = FirebaseFirestore.instance;
-    _initializeUser();
-  }
-
-  Future<void> _initializeUser() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        userId = user.uid;
-        await _fetchPledgedGifts();
-      } else {
-        print('User is not authenticated.');
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error initializing user: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
+    _fetchPledgedGifts();
   }
 
   Future<void> _fetchPledgedGifts() async {
     try {
-      // Query the gifts for the current user's events
-      QuerySnapshot eventSnapshot = await _firestore
+      if (currentUserId.isEmpty) {
+        print('User ID is null. Unable to fetch pledged gifts.');
+        return;
+      }
+
+      final eventSnapshot = await _firestore
           .collection('users')
-          .doc(userId)
-          .collection('events') // Assuming gifts are under events
+          .doc(currentUserId)
+          .collection('events')
           .get();
 
-      print('Number of events found: ${eventSnapshot.docs.length}'); // Debugging log
-
-      List<Map<String, String>> gifts = [];
+      List<Map<String, dynamic>> gifts = [];
       for (var eventDoc in eventSnapshot.docs) {
-        // Query gifts under each event
-        QuerySnapshot giftSnapshot =
-        await eventDoc.reference.collection('gifts').get();
-
-        print('Number of gifts in event ${eventDoc.id}: ${giftSnapshot.docs.length}'); // Debugging log
+        final giftSnapshot =
+        await eventDoc.reference.collection('gifts').where('isPledged', isEqualTo: true).get();
 
         for (var giftDoc in giftSnapshot.docs) {
-          // Safely cast and convert fields to String
+          final data = giftDoc.data();
           gifts.add({
-            'name': (giftDoc['name'] ?? 'Unnamed gift').toString(),
-            'friend': (giftDoc['friend'] ?? 'Unknown friend').toString(),
-            'dueDate': (giftDoc['dueDate'] != null)
-                ? (giftDoc['dueDate'] as Timestamp).toDate().toString()
+            'name': data['name']?.toString() ?? 'Unnamed gift',
+            'friend': data['friend']?.toString() ?? 'Unknown friend',
+            'dueDate': (data['dueDate'] != null)
+                ? (data['dueDate'] as Timestamp).toDate().toString()
                 : 'No due date',
           });
         }
@@ -76,14 +54,65 @@ class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
 
       setState(() {
         pledgedGifts = gifts;
-        isLoading = false; // Set loading state to false when data is fetched
       });
     } catch (e) {
       print('Error fetching pledged gifts: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load pledged gifts. Please try again.')),
+        );
+      }
+    } finally {
       setState(() {
-        isLoading = false; // Set loading state to false if an error occurs
+        isLoading = false;
       });
     }
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.card_giftcard, size: 60, color: Colors.grey),
+          SizedBox(height: 10),
+          Text(
+            'No pledged gifts yet.',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          SizedBox(height: 5),
+          Text(
+            'Start pledging gifts to see them here.',
+            style: TextStyle(fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGiftList() {
+    return ListView.builder(
+      itemCount: pledgedGifts.length,
+      itemBuilder: (context, index) {
+        final gift = pledgedGifts[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: ListTile(
+            title: Text(
+              gift['name'],
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              'Pledged by: ${gift['friend']} - Due Date: ${gift['dueDate']}',
+            ),
+            leading: const Icon(
+              Icons.card_giftcard,
+              color: Colors.teal,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -96,31 +125,8 @@ class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : pledgedGifts.isEmpty
-          ? const Center(
-        child: Text('No pledged gifts available.'),
-      )
-          : ListView.builder(
-        itemCount: pledgedGifts.length,
-        itemBuilder: (context, index) {
-          final gift = pledgedGifts[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: ListTile(
-              title: Text(
-                gift['name']!,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                'Pledged by: ${gift['friend']} - Due Date: ${gift['dueDate']}',
-              ),
-              leading: const Icon(
-                Icons.card_giftcard,
-                color: Colors.teal,
-              ),
-            ),
-          );
-        },
-      ),
+          ? _buildEmptyState()
+          : _buildGiftList(),
     );
   }
 }
