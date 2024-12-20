@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: removeLeading
           ? null
           : AppBar(
-        title: const Text('Login'),
+        title: const Text('Login#'),
         backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(

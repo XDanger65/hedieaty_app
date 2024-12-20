@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:project/controllers/firestore_service.dart';
+import 'package:project/views/gift_details_page.dart';
+import 'package:project/views/my_pledged_gifts_page.dart';  // Import the pledged gifts page.
 
 class GiftListPage extends StatefulWidget {
   final String eventTitle;
@@ -23,7 +25,8 @@ class _GiftListPageState extends State<GiftListPage> {
   }
 
   Future<void> _fetchGifts() async {
-    final fetchedGifts = await _firestoreService.getGifts(currentUserId, widget.eventTitle);
+    final fetchedGifts =
+    await _firestoreService.getGifts(currentUserId, widget.eventTitle);
     setState(() {
       gifts.clear();
       gifts.addAll(fetchedGifts);
@@ -64,7 +67,7 @@ class _GiftListPageState extends State<GiftListPage> {
                     const SnackBar(content: Text('Gift name cannot be empty')),
                   );
                 } else {
-                  await _addGift(giftName); // Add gift to Firestore and fetch updated list
+                  await _addGift(giftName);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$giftName added successfully!')),
                   );
@@ -85,6 +88,16 @@ class _GiftListPageState extends State<GiftListPage> {
     _fetchGifts();
   }
 
+  void _viewPledgedGifts() {
+    // Navigate to the pledged gifts page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MyPledgedGiftsPage(), // Navigate to pledged gifts page
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +110,10 @@ class _GiftListPageState extends State<GiftListPage> {
             onPressed: () {
               _showAddGiftDialog(context);
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.list_alt), // Icon to view pledged gifts
+            onPressed: _viewPledgedGifts,
           ),
         ],
       ),
@@ -112,7 +129,8 @@ class _GiftListPageState extends State<GiftListPage> {
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
             SizedBox(height: 5),
-            Text('Tap the + icon to add a gift.', style: TextStyle(fontSize: 14)),
+            Text('Tap the + icon to add a gift.',
+                style: TextStyle(fontSize: 14)),
           ],
         ),
       )
@@ -127,11 +145,26 @@ class _GiftListPageState extends State<GiftListPage> {
                 gift['name'],
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              trailing: Icon(
-                gift['isPledged'] ? Icons.check_circle : Icons.check_circle_outline,
-                color: gift['isPledged'] ? Colors.green : Colors.grey,
+              leading: IconButton(
+                icon: Icon(
+                  gift['isPledged']
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  color: gift['isPledged'] ? Colors.green : Colors.grey,
+                ),
+                onPressed: () => _togglePledgedStatus(gift['id'], gift['isPledged']),
               ),
-              onTap: () => _togglePledgedStatus(gift['id'], gift['isPledged']),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GiftDetailsPage(
+                      giftName: gift['name'],
+                      initialStatus: gift['isPledged'] ? 'Pledged' : 'Available',
+                    ),
+                  ),
+                );
+              },
             ),
           );
         },

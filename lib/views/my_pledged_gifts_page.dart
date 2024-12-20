@@ -31,9 +31,15 @@ class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
         await _fetchPledgedGifts();
       } else {
         print('User is not authenticated.');
+        setState(() {
+          isLoading = false;
+        });
       }
     } catch (e) {
       print('Error initializing user: $e');
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -80,7 +86,6 @@ class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,15 +96,28 @@ class _MyPledgedGiftsPageState extends State<MyPledgedGiftsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : pledgedGifts.isEmpty
-          ? const Center(child: Text('No pledged gifts available.'))
+          ? const Center(
+        child: Text('No pledged gifts available.'),
+      )
           : ListView.builder(
         itemCount: pledgedGifts.length,
         itemBuilder: (context, index) {
           final gift = pledgedGifts[index];
-          return ListTile(
-            title: Text(gift['name']!),
-            subtitle: Text(
-                'Pledged by: ${gift['friend']} - Due Date: ${gift['dueDate']}'),
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: ListTile(
+              title: Text(
+                gift['name']!,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Pledged by: ${gift['friend']} - Due Date: ${gift['dueDate']}',
+              ),
+              leading: const Icon(
+                Icons.card_giftcard,
+                color: Colors.teal,
+              ),
+            ),
           );
         },
       ),

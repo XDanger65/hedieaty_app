@@ -5,14 +5,19 @@ class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Helper method to get the Firestore reference for user data
+  DocumentReference getUserRef(String userId) {
+    return _firestore.collection('users').doc(userId);
+  }
+
   // Method to fetch user data
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      final DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
+      final DocumentSnapshot userDoc = await getUserRef(uid).get();
 
       if (userDoc.exists) {
         print('User data fetched: ${userDoc.data()}');
-        return userDoc.data() as Map<String, dynamic>;
+        return userDoc.data() as Map<String, dynamic>?;
       } else {
         print('No user document found for UID: $uid');
         return null;
@@ -26,8 +31,7 @@ class FirestoreService {
   // Method to add an event
   Future<void> addEvent(String userId, String title, String date) async {
     try {
-      // Add event to user's events collection
-      await _firestore.collection('users').doc(userId).collection('events').add({
+      await getUserRef(userId).collection('events').add({
         'title': title,
         'date': date,
         'createdAt': FieldValue.serverTimestamp(),
@@ -42,9 +46,7 @@ class FirestoreService {
   // Method to fetch events for a user
   Future<List<Map<String, dynamic>>> getUserEvents(String userId) async {
     try {
-      final QuerySnapshot eventQuery = await _firestore
-          .collection('users')
-          .doc(userId)
+      final QuerySnapshot eventQuery = await getUserRef(userId)
           .collection('events')
           .orderBy('createdAt', descending: true)
           .get();
@@ -61,7 +63,7 @@ class FirestoreService {
   // Method to update user data
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('users').doc(uid).update(data);
+      await getUserRef(uid).update(data);
       print('User data updated successfully');
     } catch (e) {
       print('Error updating user data: $e');
@@ -72,9 +74,7 @@ class FirestoreService {
   // Method to add a gift to an event
   Future<void> addGift(String userId, String eventId, String giftName) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
+      await getUserRef(userId)
           .collection('events')
           .doc(eventId)
           .collection('gifts')
@@ -93,9 +93,7 @@ class FirestoreService {
   // Method to fetch gifts for a specific event
   Future<List<Map<String, dynamic>>> getGifts(String userId, String eventId) async {
     try {
-      final QuerySnapshot giftQuery = await _firestore
-          .collection('users')
-          .doc(userId)
+      final QuerySnapshot giftQuery = await getUserRef(userId)
           .collection('events')
           .doc(eventId)
           .collection('gifts')
@@ -118,9 +116,7 @@ class FirestoreService {
   // Method to update pledged status of a gift
   Future<void> updateGiftPledgedStatus(String userId, String eventId, String giftId, bool isPledged) async {
     try {
-      final giftDoc = _firestore
-          .collection('users')
-          .doc(userId)
+      final giftDoc = getUserRef(userId)
           .collection('events')
           .doc(eventId)
           .collection('gifts')
